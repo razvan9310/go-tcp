@@ -1,4 +1,4 @@
-// Packet package defining TCP packets and their headers.
+// Package packet defining TCP packets and their headers.
 package packet
 
 // Control flag bit values.
@@ -15,13 +15,13 @@ const (
 
 // Option (or lack thereof) related values.
 const (
-	NO_SEGMENT_SIZE uint16 = 0
-	NO_WINDOW_SCALE uint8  = 0
-	NO_TIMESTAMP    uint32 = 0
+	NoSegmentSize uint16 = 0
+	NoWindowScale uint8  = 0
+	NoTimestamp   uint32 = 0
 )
 
 /*
-Simplified header. Contains:
+Header (simplified). Contains:
   * 16-bit source port;
   * 16-bit destination port;
   * 32-bit sequence number;
@@ -49,9 +49,9 @@ type Header struct {
 	Options         []uint8
 }
 
-// Generates a 8-bit control flags value from booleans.
+// NewControlFlags - generates a 8-bit control flags value from booleans.
 func NewControlFlags(cwr, ece, urg, ack, psh, rst, syn, fin bool) uint8 {
-	var flags uint8 = 0
+	var flags uint8
 	if cwr {
 		flags |= CWR
 	}
@@ -79,21 +79,21 @@ func NewControlFlags(cwr, ece, urg, ack, psh, rst, syn, fin bool) uint8 {
 	return flags
 }
 
-// Creates a new options slice from given actual values.
+// NewOptions - creates a new options slice from given actual values.
 // It is guaranteed that the returned slice's length is a multiple of 4 (i.e. multiple of 32 bits).
 func NewOptions(maxSegmentSize uint16, windowScale uint8, timestamp,
 	echoTimestamp uint32) []uint8 {
 	options := []uint8{}
 
-	if maxSegmentSize != NO_SEGMENT_SIZE {
+	if maxSegmentSize != NoSegmentSize {
 		options = append(options, 2, 4, uint8(maxSegmentSize>>8), uint8(maxSegmentSize))
 	}
 
-	if windowScale != NO_WINDOW_SCALE {
+	if windowScale != NoWindowScale {
 		options = append(options, 3, 3, windowScale)
 	}
 
-	if timestamp != NO_TIMESTAMP {
+	if timestamp != NoTimestamp {
 		options = append(options, 8, 10, uint8(timestamp>>24), uint8(timestamp>>16),
 			uint8(timestamp>>8), uint8(timestamp))
 		options = append(options, uint8(echoTimestamp>>24), uint8(echoTimestamp>>16),
@@ -111,13 +111,13 @@ func NewOptions(maxSegmentSize uint16, windowScale uint8, timestamp,
 	return options
 }
 
-// Returns the data offset (in 32-bit words), i.e. the size of a header, judging by its variable
-// length options slice.
+// GetDataOffsetFromOptions - returns the data offset (in 32-bit words), i.e. the size of a header,
+// judging by its variable length options slice.
 func GetDataOffsetFromOptions(options []uint8) uint8 {
 	return uint8(5 + len(options)/4)
 }
 
-// Creates a new Header pointer from the given parameters.
+// NewHeader - creates a new Header pointer from the given parameters.
 // Data offset is always set to 11 (11 * 32 = 352-bit header size).
 func NewHeader(source, destination uint16, sequence, ack uint32, flags uint8, window,
 	urgent uint16, options []uint8) *Header {
